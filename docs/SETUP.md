@@ -5,31 +5,31 @@ Este guia contem os passos detalhados para configurar e executar os ambientes de
 ## Pre-requisitos
 
 - Python 3.10 ou superior
-- Node.js 18 ou superior
+- Node.js 18 ou superior (recomendado via NVM)
 - Git
+
+### Dependencias do Sistema (Ubuntu/Debian)
+O projeto utiliza bibliotecas modernas que minimizam a necessidade de pacotes do sistema. No entanto, o `build-essential` e o `git` sao recomendados:
+```bash
+sudo apt update && sudo apt install -y build-essential git
+```
 
 ## 1. Configuracao do Backend
 
-Siga estes passos a partir da raiz do repositorio.
+Siga estes passos a partir da raiz do repositorio. O projeto utiliza o **uv** para gerenciamento ultra-rapido de pacotes e ambientes.
 
 ```bash
-# 1. Clone o repositorio (se ainda nao o fez)
-# git clone <url-do-repositorio>
-# cd <nome-do-repositorio>
+# 1. Instale o uv (caso nao possua)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 2. Crie e ative um ambiente virtual
-python -m venv .venv
-source .venv/bin/activate  # No Windows: .venv\Scripts\activate
+# 2. Sincronize o ambiente e dependencias
+uv sync
 
-# 3. Instale as dependencias do Python
-pip install -r requirements.txt
-
-# 4. Configure as variaveis de ambiente
-# Copie o arquivo de exemplo para criar seu arquivo de configuracao local
+# 3. Configure as variaveis de ambiente
 cp .env.example .env
 
-# Edite o arquivo .env com suas configuracoes (banco de dados, segredos, etc.)
-# Dica: Para desenvolvimento offline, voce pode deixar as variaveis de AD e POSTGRES comentadas.
+# Edite o arquivo .env com suas configuracoes
+# Dica: Para desenvolvimento offline, use PACIENTE_PROVIDER_TYPE=CSV
 nano .env
 ```
 
@@ -41,23 +41,34 @@ Estes passos devem ser executados em um novo terminal.
 # 1. Navegue ate a pasta do frontend
 cd frontend
 
-# 2. Instale as dependencias do Node.js
+# 2. Instale as dependencias e execute
 npm install
+npm run dev
 ```
 
 ## 3. Executando a Aplicacao
 
 ### Servidor de Backend
 
-Com o ambiente virtual (`.venv`) ativado, execute o servidor FastAPI a partir da raiz do projeto.
+Voce pode iniciar o servidor de tres formas:
 
+**A. Usando o script automatizado (Recomendado):**
 ```bash
-uvicorn src.main:app --reload
+./start.sh
+```
+
+**B. Usando o uv run (Desenvolvimento):**
+```bash
+uv run uvicorn src.main:app --reload
+```
+
+**C. Executando como modulo:**
+```bash
+uv run python -m src.main
 ```
 
 - O backend estara disponivel em `http://127.0.0.1:8000`.
-- A documentacao interativa da API (Swagger UI) estara em `http://127.0.0.1:8000/docs`.
-- A documentacao alternativa (ReDoc) estara em `http://127.0.0.1:8000/redoc`.
+- O Swagger UI estara em `http://127.0.0.1:8000/docs`.
 
 ### Servidor de Frontend
 

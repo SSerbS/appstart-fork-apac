@@ -42,6 +42,18 @@ Para instalar e executar a aplicacao, siga o guia de configuracao detalhado:
 
 - **[Guia de Instalacao e Execucao (SETUP.md)](./docs/SETUP.md)**
 
+## Inicio Rapido (Quick Start)
+
+Se voce ja possui o `uv` instalado, pode subir o backend em segundos:
+
+```bash
+uv sync
+cp .env.example .env
+./start.sh
+```
+
+O frontend (build de producao) sera servido automaticamente em `http://localhost:8000`.
+
 ## Aprofundamento
 
 Para entender a fundo os conceitos e padroes utilizados neste framework, consulte a documentacao especifica:
