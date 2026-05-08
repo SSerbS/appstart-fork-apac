@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 import os
@@ -54,20 +54,32 @@ app = FastAPI(
 )
 
 # Serve o frontend Vue 3 empacotado
-app.mount("/assets", StaticFiles(directory="src/static/dist/assets"), name="assets")
-
-@app.get("/")
-async def serve_frontend():
-    """
-    Serve o arquivo index.html do frontend Vue.
-    """
-    return FileResponse(os.path.join("src", "static", "dist", "index.html"))
+app.mount("/static/dist/assets", StaticFiles(directory="src/static/dist/assets"), name="assets")
+app.mount("/static/dist", StaticFiles(directory="src/static/dist"), name="static")
 
 # Placeholder para incluir os roteadores da API
-from .routers import paciente, auth, admin
+from .routers import paciente, auth, admin, aih, bpa, material
 app.include_router(paciente.router)
 app.include_router(auth.router)
 app.include_router(admin.router)
+app.include_router(aih.router)
+app.include_router(bpa.router)
+app.include_router(material.router)
+
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    """
+    Serve o arquivo index.html para todas as rotas que não são da API ou arquivos estáticos.
+    Isso é necessário para que o roteamento do Vue (SPA) funcione.
+    """
+    # Se a rota começa com 'api', deixa o roteador do FastAPI lidar
+    if full_path.startswith("api"):
+        raise HTTPException(status_code=404, detail="API route not found")
+    
+    index_path = os.path.join("src", "static", "dist", "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"error": "Frontend build not found"}
 
 # Exemplo:
 # from .routers import aih, bpa, material
