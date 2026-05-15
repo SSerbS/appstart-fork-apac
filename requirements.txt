@@ -23,7 +23,7 @@ pydantic_core==2.41.5
 PyJWT==2.10.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
-python-ldap==3.4.5
+ldap3==2.9.1
 python-multipart==0.0.20
 pytz==2025.2
 requests==2.32.5

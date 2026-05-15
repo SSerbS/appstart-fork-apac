@@ -1,63 +1,74 @@
-# Guia de Instalacao e Execucao
+# Guia de Instalação e Execução
 
-Este guia contem os passos detalhados para configurar e executar os ambientes de desenvolvimento do backend e do frontend.
+Este guia contém os passos detalhados para configurar e executar os ambientes de desenvolvimento do backend e do frontend.
 
-## Pre-requisitos
+## Pré-requisitos
 
 - Python 3.10 ou superior
-- Node.js 18 ou superior
+- Node.js 18 ou superior (recomendado via NVM)
 - Git
 
-## 1. Configuracao do Backend
+### Dependências do Sistema (Ubuntu/Debian)
+O projeto utiliza bibliotecas modernas que minimizam a necessidade de pacotes do sistema. No entanto, o `build-essential` e o `git` são recomendados:
+```bash
+sudo apt update && sudo apt install -y build-essential git
+```
 
-Siga estes passos a partir da raiz do repositorio.
+## 1. Configuração do Backend
+
+Siga estes passos a partir da raiz do repositório. O projeto utiliza o **uv** para gerenciamento ultra-rápido de pacotes e ambientes.
 
 ```bash
-# 1. Clone o repositorio (se ainda nao o fez)
-# git clone <url-do-repositorio>
-# cd <nome-do-repositorio>
+# 1. Instale o uv (caso não possua)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 2. Crie e ative um ambiente virtual
-python -m venv .venv
-source .venv/bin/activate  # No Windows: .venv\Scripts\activate
+# 2. Sincronize o ambiente e dependências
+uv sync
 
-# 3. Instale as dependencias do Python
-pip install -r requirements.txt
-
-# 4. Configure as variaveis de ambiente
-# Copie o arquivo de exemplo para criar seu arquivo de configuracao local
+# 3. Configure as variáveis de ambiente
 cp .env.example .env
 
-# Edite o arquivo .env com suas configuracoes (banco de dados, segredos, etc.)
-# Dica: Para desenvolvimento offline, voce pode deixar as variaveis de AD e POSTGRES comentadas.
+# Edite o arquivo .env com suas configurações
+# Dica: Para desenvolvimento offline, use PACIENTE_PROVIDER_TYPE=CSV
 nano .env
 ```
 
-## 2. Configuracao do Frontend
+## 2. Configuração do Frontend
 
 Estes passos devem ser executados em um novo terminal.
 
 ```bash
-# 1. Navegue ate a pasta do frontend
+# 1. Navegue até a pasta do frontend
 cd frontend
 
-# 2. Instale as dependencias do Node.js
+# 2. Instale as dependências e execute
 npm install
+npm run dev
 ```
 
-## 3. Executando a Aplicacao
+## 3. Executando a Aplicação
 
 ### Servidor de Backend
 
-Com o ambiente virtual (`.venv`) ativado, execute o servidor FastAPI a partir da raiz do projeto.
+Você pode iniciar o servidor de três formas:
 
+**A. Usando o script automatizado (Recomendado):**
 ```bash
-uvicorn src.main:app --reload
+./start.sh
 ```
 
-- O backend estara disponivel em `http://127.0.0.1:8000`.
-- A documentacao interativa da API (Swagger UI) estara em `http://127.0.0.1:8000/docs`.
-- A documentacao alternativa (ReDoc) estara em `http://127.0.0.1:8000/redoc`.
+**B. Usando o uv run (Desenvolvimento):**
+```bash
+uv run uvicorn src.main:app --reload
+```
+
+**C. Executando como módulo:**
+```bash
+uv run python -m src.main
+```
+
+- O backend estará disponível em `http://127.0.0.1:8000`.
+- O Swagger UI estará em `http://127.0.0.1:8000/docs`.
 
 ### Servidor de Frontend
 
@@ -67,15 +78,15 @@ Na pasta `frontend/`, execute o servidor de desenvolvimento do Vite.
 npm run dev
 ```
 
-- O frontend estara disponivel em `http://127.0.0.1:5173` (ou outra porta indicada pelo Vite). O servidor de desenvolvimento do Vite ja vem configurado com um proxy para o backend, entao todas as chamadas de API para `/api` serao redirecionadas automaticamente para `http://127.0.0.1:8000`.
+- O frontend estará disponível em `http://127.0.0.1:5173` (ou outra porta indicada pelo Vite). O servidor de desenvolvimento do Vite já vem configurado com um proxy para o backend, então todas as chamadas de API para `/api` serão redirecionadas automaticamente para `http://127.0.0.1:8000`.
 
-## 4. Build de Producao do Frontend
+## 4. Build de Produção do Frontend
 
-Para gerar a versao de producao do frontend, que e servida diretamente pelo FastAPI:
+Para gerar a versão de produção do frontend, que é servida diretamente pelo FastAPI:
 
 ```bash
 # Na pasta frontend/
 npm run build
 ```
 
-Os arquivos gerados em `frontend/dist/` serao servidos pela aplicacao FastAPI quando ela nao estiver em modo de desenvolvimento, na rota raiz (`/`).
+Os arquivos gerados em `frontend/dist/` serão servidos pela aplicação FastAPI quando ela não estiver em modo de desenvolvimento, na rota raiz (`/`).

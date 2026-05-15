@@ -1,6 +1,6 @@
 import os
 import jwt
-import ldap
+from ldap3 import Server, Connection, ALL, SUBTREE, SIMPLE
 import re
 import secrets
 from datetime import datetime, timedelta
@@ -52,7 +52,7 @@ class MockAuthProvider(AuthProviderInterface):
             )
 
 class ActiveDirectoryAuthProvider(AuthProviderInterface):
-    """Provedor de autenticação real usando LDAP/Active Directory."""
+    """Provedor de autenticação real usando LDAP/Active Directory (ldap3)."""
     def __init__(self):
         self.ad_url = os.getenv("AD_URL")
         self.ad_basedn = os.getenv("AD_BASEDN")
@@ -62,53 +62,83 @@ class ActiveDirectoryAuthProvider(AuthProviderInterface):
             raise RuntimeError("Active Directory is not configured. Check .env file.")
 
     def authenticate_user(self, username, password) -> dict:
-        print(f"--- Starting AD Authentication for user: {username} ---")
-        l = None
+        print(f"--- Starting AD Authentication (ldap3) for user: {username} ---")
         try:
-            l = ldap.initialize(self.ad_url)
-            l.protocol_version = ldap.VERSION3
-            l.set_option(ldap.OPT_REFERRALS, 0)
-
+            server = Server(self.ad_url, get_info=ALL)
             user_bind_dn = f"EBSERHNET\\{username}"
-            l.simple_bind_s(user_bind_dn, password)
+            
+            # Autenticação inicial (Bind)
+            conn = Connection(server, user=user_bind_dn, password=password, authentication=SIMPLE, check_names=True, raise_exceptions=True)
+            conn.bind()
 
-            groups = []
-            search_ldap_conn = l
+            # Se chegamos aqui, o bind foi bem sucedido.
+            # Agora buscamos informações do usuário e seus grupos.
+            search_conn = conn
             if self.ad_bind_user and self.ad_bind_password:
-                search_ldap_conn = ldap.initialize(self.ad_url)
-                search_ldap_conn.protocol_version = ldap.VERSION3
-                search_ldap_conn.set_option(ldap.OPT_REFERRALS, 0)
-                search_ldap_conn.simple_bind_s(self.ad_bind_user, self.ad_bind_password)
+                # Opcional: usar um usuário de serviço para buscas se o usuário logado tiver restrições
+                search_conn = Connection(server, user=self.ad_bind_user, password=self.ad_bind_password, authentication=SIMPLE, check_names=True, raise_exceptions=True)
+                search_conn.bind()
 
             search_filter = f"(&(objectClass=user)(sAMAccountName={username}))"
-            result_id = search_ldap_conn.search(self.ad_basedn, ldap.SCOPE_SUBTREE, search_filter, ["*"])
-            result_type, result_data = search_ldap_conn.result(result_id, 1)
+            search_conn.search(self.ad_basedn, search_filter, search_scope=SUBTREE, attributes=['*'])
 
+            if not search_conn.entries:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User found during bind but search returned no data.")
+
+            user_entry = search_conn.entries[0]
             user_info = {"username": username}
-            if result_data and result_data[0][1]:
-                user_entry = result_data[0][1]
-                for key, value in user_entry.items():
-                    if key == 'memberOf':
-                        groups = [re.match(r'CN=([^,]+)', group_dn.decode('utf-8')).group(1) for group_dn in value if re.match(r'CN=([^,]+)', group_dn.decode('utf-8'))]
-                        user_info['groups'] = groups
-                    else:
-                        user_info[key] = [i.decode('utf-8', 'ignore') for i in value] if isinstance(value, list) else value.decode('utf-8', 'ignore')
+            groups = []
 
-            if search_ldap_conn != l:
-                search_ldap_conn.unbind_s()
+            # Extração de atributos selecionados para evitar problemas de serialização (como datetime)
+            allowed_attrs = {
+                'displayName': 'displayName',
+                'mail': 'email',
+                'title': 'title',
+                'department': 'department',
+                'employeeNumber': 'employeeNumber',
+                'givenName': 'givenName',
+                'userPrincipalName': 'userPrincipalName'
+            }
+            
+            for attr_name in user_entry.entry_attributes:
+                value = user_entry[attr_name].value
+                attr_lower = attr_name.lower()
+                
+                if attr_lower == 'memberof':
+                    raw_groups = value if isinstance(value, list) else [value]
+                    for group_dn in raw_groups:
+                        match = re.match(r'CN=([^,]+)', group_dn)
+                        if match:
+                            groups.append(match.group(1))
+                    user_info['groups'] = groups
+                elif attr_name in allowed_attrs:
+                    # Garante que o valor seja SEMPRE uma lista de strings para o frontend
+                    if isinstance(value, list):
+                        user_info[allowed_attrs[attr_name]] = [str(v) for v in value]
+                    else:
+                        user_info[allowed_attrs[attr_name]] = [str(value)] if value is not None else []
+
+            # Garante que groups sempre exista
+            if 'groups' not in user_info:
+                user_info['groups'] = []
+
+            # Limpeza das conexões
+            if search_conn != conn:
+                search_conn.unbind()
+            conn.unbind()
             
             print(f"--- AD Authentication successful for user: {username}. ---")
             return user_info
 
-        except ldap.INVALID_CREDENTIALS:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-        except ldap.SERVER_DOWN:
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AD server is down or unreachable")
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"AD error: {e}")
-        finally:
-            if l:
-                l.unbind_s()
+            # Tratamento de erros específicos do ldap3 ou genéricos
+            error_str = str(e)
+            if "invalidCredentials" in error_str:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+            elif "server not available" in error_str.lower():
+                raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AD server is down or unreachable")
+            else:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"AD error: {e}")
 
 # --- AuthHandler Principal ---
 
@@ -129,8 +159,11 @@ class AuthHandler:
         to_encode = data.copy()
         if 'username' in to_encode:
             to_encode['sub'] = to_encode['username']
+        
+        # Use o tempo Unix (timestamp) para garantir serialização JSON
         expire = datetime.utcnow() + (expires_delta or timedelta(hours=JWT_EXP_HOURS))
-        to_encode.update({"exp": expire})
+        to_encode.update({"exp": int(expire.timestamp())})
+        
         if not JWT_SECRET:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="JWT_SECRET not configured")
         return jwt.encode(to_encode, JWT_SECRET, algorithm="HS256")
