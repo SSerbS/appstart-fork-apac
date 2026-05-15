@@ -8,8 +8,7 @@
           <div class="flex items-center space-x-2">
             <input id="pacienteCodigoInput" v-model="pacienteCodigoInput" type="number" placeholder="Digite o código do paciente" class="form-control">
             <Button @click="fetchPacientePorCodigo" :disabled="loadingPaciente" variant="success" class="whitespace-nowrap">
-              <span v-if="loadingPaciente">Buscando...</span>
-              <span v-else>Buscar</span>
+              Buscar
             </Button>
           </div>
         </div>

@@ -69,7 +69,7 @@
         </div>
         <div class="flex justify-end space-x-4 mt-4">
           <Button type="button" variant="default">Cancelar</Button>
-          <Button type="submit" variant="primary" :loading="isSubmitting">Enviar</Button>
+          <Button type="submit" variant="primary" :disabled="isSubmitting">Enviar</Button>
         </div>
       </Form>
     </Card>
@@ -87,7 +87,7 @@
         <Button @click="showWarningToast" variant="warning">Toast Aviso</Button>
         
         <!-- Loading Button -->
-        <Button @click="showLoadingButton" :loading="isLoadingButton">
+        <Button @click="showLoadingButton" :disabled="isLoadingButton">
           <template #icon>
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
