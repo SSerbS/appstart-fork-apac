@@ -102,7 +102,7 @@ pip install -r requirements.txt
 
 4.4. Salve o arquivo.  
 
-7. Execute o comando para rodar o backend
+5. Execute o comando para rodar o backend
 
 ```bash
 uvicorn src.main:app --reload
