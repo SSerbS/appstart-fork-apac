@@ -4,31 +4,41 @@ from fastapi import HTTPException, status
 
 from ..interfaces.paciente_provider_interface import PacienteProviderInterface
 
+# Índices das colunas do CSV (ajuste conforme necessário)
+INDEX_ID = 0
+INDEX_CNS = 1
+INDEX_NOME = 2
+INDEX_DATA = 3
+INDEX_TEXTO = 4
+
 class PacienteCsvProvider(PacienteProviderInterface):
     def __init__(self, csv_path: str = 'data/pacientes.csv'):
         self.csv_path = csv_path
-        self._check_file_exists()
-
-    def _check_file_exists(self):
-        try:
-            with open(self.csv_path, mode='r', encoding='utf-8') as f:
-                pass
-        except FileNotFoundError:
-            raise RuntimeError(f"Arquivo CSV de pacientes não encontrado em: {self.csv_path}")
 
     async def listar_pacientes(self) -> List[Dict[str, Any]]:
         pacientes = []
         try:
             with open(self.csv_path, mode='r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
+                reader = csv.reader(f)
                 for row in reader:
-                    # Tenta converter o código para int
-                    if 'codigo' in row:
-                        try:
-                            row['codigo'] = int(row['codigo'])
-                        except ValueError:
-                            pass
-                    pacientes.append(row)
+                    # Ignorar linhas vazias ou muito curtas
+                    if not row or len(row) <= max(INDEX_ID, INDEX_CNS, INDEX_NOME, INDEX_DATA, INDEX_TEXTO):
+                        continue
+                    
+                    try:
+                        seq_atendimento = int(row[INDEX_ID])
+                    except ValueError:
+                        seq_atendimento = row[INDEX_ID]
+
+                    pacientes.append({
+                        "seq_atendimento": seq_atendimento,
+                        "cns_paciente": row[INDEX_CNS].strip() if row[INDEX_CNS] else "",
+                        "nome_paciente": row[INDEX_NOME].strip() if row[INDEX_NOME] else "",
+                        "data_atendimento": row[INDEX_DATA].strip() if row[INDEX_DATA] else "",
+                        "texto_evolucao": row[INDEX_TEXTO].strip() if row[INDEX_TEXTO] else ""
+                    })
+        except FileNotFoundError:
+            print(f"Arquivo CSV de pacientes não encontrado em: {self.csv_path}")
         except Exception as e:
             print(f"Erro ao ler CSV: {e}")
         return pacientes
@@ -36,18 +46,27 @@ class PacienteCsvProvider(PacienteProviderInterface):
     async def obter_paciente_por_codigo(self, codigo: int) -> Dict[str, Any]:
         try:
             with open(self.csv_path, mode='r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
+                reader = csv.reader(f)
                 for row in reader:
-                    try:
-                        current_codigo = int(row.get('codigo', -1))
-                        if current_codigo == codigo:
-                            # Converte o código no dicionário retornado também
-                            row['codigo'] = current_codigo
-                            return row
-                    except ValueError:
+                    if not row or len(row) <= max(INDEX_ID, INDEX_CNS, INDEX_NOME, INDEX_DATA, INDEX_TEXTO):
                         continue
+                    
+                    try:
+                        current_codigo = int(row[INDEX_ID])
+                    except ValueError:
+                        current_codigo = row[INDEX_ID]
+                        
+                    if str(current_codigo) == str(codigo):
+                        return {
+                            "seq_atendimento": current_codigo,
+                            "cns_paciente": row[INDEX_CNS].strip() if row[INDEX_CNS] else "",
+                            "nome_paciente": row[INDEX_NOME].strip() if row[INDEX_NOME] else "",
+                            "data_atendimento": row[INDEX_DATA].strip() if row[INDEX_DATA] else "",
+                            "texto_evolucao": row[INDEX_TEXTO].strip() if row[INDEX_TEXTO] else ""
+                        }
+        except FileNotFoundError:
+            print(f"Arquivo CSV de pacientes não encontrado em: {self.csv_path}")
         except Exception as e:
             print(f"Erro ao ler CSV: {e}")
 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paciente não encontrado no CSV")
-
