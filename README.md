@@ -92,11 +92,11 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. Configure as Variáveis de Ambiente (O arquivo .env):
-4.1. Copie o arquivo .env.example e renomeie a cópia para .env.
-4.2. Abra o .env e coloque um # na frente de todas as linhas que começam com AD_ (para desligar o Active Directory e usar o login local).
-4.3. Certifique-se de que a linha do banco de dados está ativa: ```SQLITE_DSN="sqlite+aiosqlite:///./app.db"```.
-4.4. Salve o arquivo.
+4. Configure as Variáveis de Ambiente (O arquivo .env):  
+4.1. Copie o arquivo .env.example e renomeie a cópia para .env.  
+4.2. Abra o .env e coloque um # na frente de todas as linhas que começam com AD_ (para desligar o Active Directory e usar o login local).  
+4.3. Certifique-se de que a linha do banco de dados está ativa: ```SQLITE_DSN="sqlite+aiosqlite:///./app.db"```.  
+4.4. Salve o arquivo.  
 
 5. Execute o comando para rodar o backend
 
