@@ -6,6 +6,7 @@ import Admin from '../views/Admin.vue';
 
 import Exemplos from '../views/Exemplos.vue';
 import Pacientes from '../views/Pacientes.vue';
+import ApacDashboard from '../views/ApacDashboard.vue';
 
 const routes = [
   {
@@ -35,6 +36,12 @@ const routes = [
     path: '/pacientes',
     name: 'Pacientes',
     component: Pacientes,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/apac',
+    name: 'APAC',
+    component: ApacDashboard,
     meta: { requiresAuth: true },
   },
 ];

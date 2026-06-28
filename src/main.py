@@ -54,9 +54,9 @@ app = FastAPI(
 )
 
 # Serve o frontend Vue 3 empacotado
-app.mount("/assets", StaticFiles(directory="src/static/dist/assets"), name="assets")
+# app.mount("/assets", StaticFiles(directory="src/static/dist/assets"), name="assets")
 # Outros arquivos estáticos na raiz do dist (como favicon.ico)
-app.mount("/static", StaticFiles(directory="src/static/dist"), name="static")
+# app.mount("/static", StaticFiles(directory="src/static/dist"), name="static")
 
 # Placeholder para incluir os roteadores da API
 from .routers import paciente, auth, admin, aih, bpa, material, apac

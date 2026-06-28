@@ -7,9 +7,9 @@ from ..interfaces.paciente_provider_interface import PacienteProviderInterface
 # Índices das colunas do CSV (ajuste conforme necessário)
 INDEX_ID = 0
 INDEX_CNS = 1
-INDEX_NOME = 2
-INDEX_DATA = 3
-INDEX_TEXTO = 4
+INDEX_NOME = 5
+INDEX_DATA = 2
+INDEX_TEXTO = 6
 
 class PacienteCsvProvider(PacienteProviderInterface):
     def __init__(self, csv_path: str = 'data/pacientes.csv'):
@@ -23,6 +23,13 @@ class PacienteCsvProvider(PacienteProviderInterface):
                 for row in reader:
                     # Ignorar linhas vazias ou muito curtas
                     if not row or len(row) <= max(INDEX_ID, INDEX_CNS, INDEX_NOME, INDEX_DATA, INDEX_TEXTO):
+                        continue
+                    
+                    # Ignorar se as colunas essenciais ou a evolução clínica estiverem vazias
+                    raw_id = row[INDEX_ID].strip() if row[INDEX_ID] else ""
+                    raw_cns = row[INDEX_CNS].strip() if row[INDEX_CNS] else ""
+                    raw_texto = row[INDEX_TEXTO].strip() if row[INDEX_TEXTO] else ""
+                    if not raw_id or not raw_cns or not raw_texto:
                         continue
                     
                     try:
@@ -49,6 +56,13 @@ class PacienteCsvProvider(PacienteProviderInterface):
                 reader = csv.reader(f)
                 for row in reader:
                     if not row or len(row) <= max(INDEX_ID, INDEX_CNS, INDEX_NOME, INDEX_DATA, INDEX_TEXTO):
+                        continue
+                    
+                    # Ignorar se as colunas essenciais ou a evolução clínica estiverem vazias
+                    raw_id = row[INDEX_ID].strip() if row[INDEX_ID] else ""
+                    raw_cns = row[INDEX_CNS].strip() if row[INDEX_CNS] else ""
+                    raw_texto = row[INDEX_TEXTO].strip() if row[INDEX_TEXTO] else ""
+                    if not raw_id or not raw_cns or not raw_texto:
                         continue
                     
                     try:

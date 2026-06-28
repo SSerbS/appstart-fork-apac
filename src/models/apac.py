@@ -16,6 +16,7 @@ class DicionarioTermo(Base):
 
     id_termo = Column(Integer, primary_key=True, autoincrement=True)
     jargao_medico = Column(String, nullable=False, unique=True)
-    codigo_procedimento = Column(String, nullable=False)
-    cid_principal = Column(String, nullable=False)
+    categoria = Column(String, nullable=False) # 'diagnostico' ou 'tratamento'
+    codigo_procedimento = Column(String, nullable=True)
+    cid_principal = Column(String, nullable=True)
     cid_secundario = Column(String, nullable=True)

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Body
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.auth import auth_handler
@@ -9,6 +10,16 @@ from ..providers.interfaces.paciente_provider_interface import PacienteProviderI
 from ..controllers import apac_controller
 
 STRATEGY = "csv"
+
+class TermoCreate(BaseModel):
+    jargao_medico: str
+    categoria: str
+    codigo_procedimento: Optional[str] = None
+    cid_principal: Optional[str] = None
+    cid_secundario: Optional[str] = None
+
+class TermoResponse(TermoCreate):
+    id_termo: int
 
 router = APIRouter(
     prefix="/api/apac",
@@ -38,15 +49,15 @@ async def listar_pacientes_apac(
         
     return pacientes
 
-@router.post("/dicionario")
+@router.post("/dicionario", response_model=TermoResponse)
 async def adicionar_termo(
-    dados: Dict[str, Any] = Body(...),
+    dados: TermoCreate = Body(...),
     session: AsyncSession = Depends(get_app_db_session)
 ):
     """
     Adiciona novos termos ao banco transacional.
     """
-    return await apac_controller.adicionar_termo_dicionario(session, dados)
+    return await apac_controller.adicionar_termo_dicionario(session, dados.dict())
 
 @router.get("/exportar")
 async def exportar_apac():

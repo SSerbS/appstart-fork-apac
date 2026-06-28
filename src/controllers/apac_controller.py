@@ -44,6 +44,7 @@ def mapear_termos(texto: str, dicionario: List[Dict[str, Any]]) -> List[Dict[str
                 intervalos_mapeados.add((inicio, fim))
                 resultados.append({
                     "termo": jargao,
+                    "categoria": item.get('categoria'),
                     "codigo_procedimento": item.get('codigo_procedimento'),
                     "cid_principal": item.get('cid_principal'),
                     "cid_secundario": item.get('cid_secundario'),
@@ -62,6 +63,7 @@ async def obter_dicionario(session: AsyncSession) -> List[Dict[str, Any]]:
         {
             "id_termo": t.id_termo,
             "jargao_medico": t.jargao_medico,
+            "categoria": t.categoria,
             "codigo_procedimento": t.codigo_procedimento,
             "cid_principal": t.cid_principal,
             "cid_secundario": t.cid_secundario
@@ -73,6 +75,7 @@ async def adicionar_termo_dicionario(session: AsyncSession, dados: dict) -> Dict
     """Adiciona um novo termo ao dicionário."""
     novo_termo = DicionarioTermo(
         jargao_medico=dados.get("jargao_medico"),
+        categoria=dados.get("categoria"),
         codigo_procedimento=dados.get("codigo_procedimento"),
         cid_principal=dados.get("cid_principal"),
         cid_secundario=dados.get("cid_secundario")
@@ -84,6 +87,7 @@ async def adicionar_termo_dicionario(session: AsyncSession, dados: dict) -> Dict
         return {
             "id_termo": novo_termo.id_termo,
             "jargao_medico": novo_termo.jargao_medico,
+            "categoria": novo_termo.categoria,
             "codigo_procedimento": novo_termo.codigo_procedimento,
             "cid_principal": novo_termo.cid_principal,
             "cid_secundario": novo_termo.cid_secundario
