@@ -71,3 +71,54 @@ Para entender a fundo os conceitos e padrões utilizados neste framework, consul
 
 - **[Arquitetura do Projeto (ARCHITECTURE.md)](./docs/ARCHITECTURE.md)**
 - **[Sistema de Autenticação (AUTHENTICATION.md)](./docs/AUTHENTICATION.md)**
+
+## Como rodar o projeto
+
+1. Crie o ambiente virtual
+
+```bash
+python -m venv venv
+```
+
+2. Ative o ambiente virtual
+
+```bash
+venv\Scripts\activate
+```
+
+3. Instale as dependencias do backend
+
+```bash
+pip install -r requirements.txt
+```
+
+4. Configure as Variáveis de Ambiente (O arquivo .env):
+   4.1. Copie o arquivo .env.example e renomeie a cópia para .env.
+   4.2. Abra o .env e coloque um # na frente de todas as linhas que começam com AD_ (para desligar o Active Directory e usar o login local).
+   4.3. Certifique-se de que a linha do banco de dados está ativa: ```SQLITE_DSN="sqlite+aiosqlite:///./app.db"```.
+   4.4. Salve o arquivo.
+
+5. Execute o comando para rodar o backend
+
+```bash
+uvicorn src.main:app --reload
+```
+(Deixe esse terminal rodando e abra um novo)
+
+6. No novo terminal, navegue até o front-end
+
+```bash
+cd frontend
+```
+
+7. Instale as dependencias do frontend
+
+```bash
+npm install
+```
+
+8. Ligue o servidor frontend
+
+```bash
+npm run dev
+```
