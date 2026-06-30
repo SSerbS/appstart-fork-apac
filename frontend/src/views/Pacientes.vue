@@ -6,7 +6,7 @@
         <div class="form-group flex-1">
           <label for="pacienteCodigoInput" class="form-label">Buscar Paciente por Código</label>
           <div class="flex items-center space-x-2">
-            <input id="pacienteCodigoInput" v-model="pacienteCodigoInput" type="number" placeholder="Digite o código do paciente" class="form-control">
+            <input id="pacienteCodigoInput" v-model="pacienteCodigoInput" @keyup.enter="fetchPacientePorCodigo" type="text" placeholder="Digite o código do paciente" class="form-control">
             <Button @click="fetchPacientePorCodigo" :disabled="loadingPaciente" variant="success" class="whitespace-nowrap">
               Buscar
             </Button>
@@ -72,10 +72,10 @@ const loadingPaciente = ref(false);
 const pacienteDetalhe = ref<any | null>(null);
 
 const headers = ref([
-  { text: 'Prontuário', value: 'codigo' },
-  { text: 'Nome', value: 'nome' },
-  { text: 'Data de Nascimento', value: 'dt_nascimento' },
-  { text: 'Nome da Mãe', value: 'nome_mae' },
+  { text: 'Prontuário', value: 'seq_atendimento' },
+  { text: 'Nome', value: 'nome_paciente' },
+  { text: 'Data de Nascimento', value: 'dt_nascimento_mock' },
+  { text: 'Nome da Mãe', value: 'nome_mae_mock' },
 ]);
 
 const pacientes = ref([]);
@@ -83,39 +83,52 @@ const pacientes = ref([]);
 onMounted(async () => {
   try {
     const { data } = await api.get('/api/pacientes');
-    pacientes.value = data;
+    pacientes.value = data.map((p: any) => ({
+      ...p,
+      dt_nascimento_mock: '-',
+      nome_mae_mock: '-'
+    }));
   } catch (error) {
     toast.error('Falha ao carregar a lista de pacientes.');
   }
 });
 
 const fetchPacientePorCodigo = async () => {
-  if (!pacienteCodigoInput.value) {
-    toast.error('Por favor, digite um código.');
-    return;
-  }
   loadingPaciente.value = true;
   pacienteDetalhe.value = null; // Clear previous details
   try {
-    const { data } = await api.get(`/api/pacientes/${pacienteCodigoInput.value}`);
-    pacienteDetalhe.value = data;
-    toast.success(`Paciente encontrado: ${data.nome}`);
+    let url = '/api/pacientes';
+    let config: any = {};
+    if (pacienteCodigoInput.value) {
+      config.params = { search_id: pacienteCodigoInput.value };
+    }
+    const { data } = await api.get(url, config);
+    pacientes.value = data.map((p: any) => ({
+      ...p,
+      dt_nascimento_mock: '-',
+      nome_mae_mock: '-'
+    }));
+    if (pacienteCodigoInput.value) {
+      toast.success('Busca concluída.');
+    } else {
+      toast.success('Lista recarregada com todos os pacientes.');
+    }
   } catch (error) {
-    toast.error('Paciente não encontrado.');
+    toast.error('Erro ao buscar paciente(s).');
   } finally {
     loadingPaciente.value = false;
   }
 };
 
 const viewPaciente = (item: any) => {
-  toast.info(`Visualizando paciente: ${item.nome}`);
+  toast.info(`Visualizando paciente: ${item.nome_paciente || item.nome}`);
 };
 
 const editPaciente = (item: any) => {
-  toast.warning(`Editando paciente: ${item.nome}`);
+  toast.warning(`Editando paciente: ${item.nome_paciente || item.nome}`);
 };
 
 const deletePaciente = (item: any) => {
-  toast.error(`Deletando paciente: ${item.nome}`);
+  toast.error(`Deletando paciente: ${item.nome_paciente || item.nome}`);
 };
 </script>

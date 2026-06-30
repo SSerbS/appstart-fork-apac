@@ -20,13 +20,18 @@ class PacientePostgresProvider(PacienteProviderInterface):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def listar_pacientes(self) -> List[Dict[str, Any]]:
+    async def listar_pacientes(self, search_id: str = None) -> List[Dict[str, Any]]:
         query_string = get_sql_query("paciente/listar_pacientes.sql")
         query = text(query_string)
         
         result = await self.session.execute(query)
         pacientes = result.mappings().all()
-        return [dict(paciente) for paciente in pacientes]
+        pacientes_list = [dict(paciente) for paciente in pacientes]
+        
+        if search_id is not None:
+            pacientes_list = [p for p in pacientes_list if str(p.get("seq_atendimento", "")) == str(search_id)]
+            
+        return pacientes_list
 
     async def obter_paciente_por_codigo(self, codigo: int) -> Dict[str, Any]:
         query_string = get_sql_query("paciente/obter_paciente.sql")

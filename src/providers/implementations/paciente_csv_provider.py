@@ -15,7 +15,7 @@ class PacienteCsvProvider(PacienteProviderInterface):
     def __init__(self, csv_path: str = 'data/pacientes.csv'):
         self.csv_path = csv_path
 
-    async def listar_pacientes(self) -> List[Dict[str, Any]]:
+    async def listar_pacientes(self, search_id: str = None) -> List[Dict[str, Any]]:
         pacientes = []
         try:
             with open(self.csv_path, mode='r', encoding='utf-8') as f:
@@ -33,9 +33,12 @@ class PacienteCsvProvider(PacienteProviderInterface):
                         continue
                     
                     try:
-                        seq_atendimento = int(row[INDEX_ID])
+                        seq_atendimento = int(raw_id)
                     except ValueError:
-                        seq_atendimento = row[INDEX_ID]
+                        seq_atendimento = raw_id
+
+                    if search_id is not None and str(seq_atendimento) != str(search_id).strip():
+                        continue
 
                     pacientes.append({
                         "seq_atendimento": seq_atendimento,
