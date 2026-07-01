@@ -59,6 +59,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import api from '../services/api';
 import Card from '../components/Card.vue';
@@ -66,6 +67,7 @@ import DataTable from '../components/DataTable.vue';
 import Button from '../components/Button.vue';
 
 const toast = useToast();
+const router = useRouter();
 
 const pacienteCodigoInput = ref(null);
 const loadingPaciente = ref(false);
@@ -122,6 +124,7 @@ const fetchPacientePorCodigo = async () => {
 
 const viewPaciente = (item: any) => {
   toast.info(`Visualizando paciente: ${item.nome_paciente || item.nome}`);
+  router.push({ path: '/apac', query: { id: item.codigo || item.seq_atendimento } });
 };
 
 const editPaciente = (item: any) => {

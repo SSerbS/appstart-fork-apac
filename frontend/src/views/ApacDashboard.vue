@@ -1,7 +1,21 @@
 <template>
   <div class="mb-8">
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
       <h2 class="text-2xl font-bold text-gray-800">Dashboard APAC</h2>
+      
+      <div class="flex space-x-2">
+        <input 
+          v-model="buscaId" 
+          @keyup.enter="buscarPaciente"
+          type="text" 
+          placeholder="Buscar paciente por ID" 
+          class="px-4 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-600"
+        />
+        <button @click="buscarPaciente" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition shadow">
+          Buscar
+        </button>
+      </div>
+
       <button @click="exportar" class="px-4 py-2 bg-purple-600 text-white font-semibold rounded hover:bg-purple-700 transition shadow">
         Exportar APACs
       </button>
@@ -16,7 +30,7 @@
     </div>
 
     <div v-else class="space-y-6">
-      <div v-for="paciente in store.pacientesComStatus" :key="paciente.seq_atendimento" class="bg-white p-6 rounded shadow border border-gray-200">
+      <div v-for="paciente in pacientesFiltrados" :key="paciente.seq_atendimento" class="bg-white p-6 rounded shadow border border-gray-200">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 border-b pb-4">
           <div>
             <h3 class="text-xl font-bold text-gray-800">{{ paciente.nome_paciente }}</h3>
@@ -42,7 +56,7 @@
         </div>
       </div>
       
-      <div v-if="store.pacientesComStatus.length === 0" class="text-center text-gray-500 py-8 bg-white rounded shadow border border-gray-200">
+      <div v-if="pacientesFiltrados.length === 0" class="text-center text-gray-500 py-8 bg-white rounded shadow border border-gray-200">
         Nenhum paciente encontrado.
       </div>
     </div>
@@ -50,14 +64,38 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { useApacStore } from '../stores/apac';
 import HighlightText from '../components/HighlightText.vue';
 
 const store = useApacStore();
+const route = useRoute();
 
-onMounted(() => {
-  store.fetchPacientes();
+const buscaId = ref('');
+const pacienteFiltrado = ref('');
+
+onMounted(async () => {
+  await store.fetchPacientes();
+  const id = route.query.id as string;
+  if (id) {
+    buscaId.value = id;
+    buscarPaciente();
+  }
+});
+
+const buscarPaciente = () => {
+  pacienteFiltrado.value = buscaId.value;
+};
+
+const pacientesFiltrados = computed(() => {
+  if (!pacienteFiltrado.value) return store.pacientesComStatus;
+  
+  const termo = pacienteFiltrado.value.toLowerCase();
+  return store.pacientesComStatus.filter(p => 
+    String(p.seq_atendimento).toLowerCase().includes(termo) || 
+    String(p.cns_paciente || '').toLowerCase().includes(termo)
+  );
 });
 
 const exportar = async () => {
