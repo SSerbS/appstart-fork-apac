@@ -68,21 +68,7 @@ const highlightedText = computed(() => {
   if (!props.textoEvolucao) return '';
   if (!props.termosEncontrados || props.termosEncontrados.length === 0) return escapeHtml(props.textoEvolucao);
 
-  let text = props.textoEvolucao;
-  
-  // Substituir de trás pra frente para não bagunçar os índices
-  const termosOrdenados = [...props.termosEncontrados].sort((a, b) => b.inicio - a.inicio);
-  
-  for (const termo of termosOrdenados) {
-    const inicio = termo.inicio;
-    const fim = termo.fim;
-    const antes = escapeHtml(text.substring(0, inicio));
-    const meio = escapeHtml(text.substring(inicio, fim));
-    const depois = text.substring(fim); // Vamos processar 'depois' nas próximas iterações ou ele já foi processado
-    // Wait, by substituting backwards, 'depois' has already been substituted, so it might contain HTML. 
-    // We should only escape 'antes' and 'meio' if we are doing this in parts. 
-    // A better approach is to build an array of chunks. Let's do that for safety.
-  }
+
   
   // Abordagem segura construindo chunks
   let result = '';
